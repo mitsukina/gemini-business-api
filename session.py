@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from config import logger, http_client, IMAGE_SAVE_DIR
+from config import logger, http_client, IMAGE_SAVE_DIR, BASE_URL
 from auth import Account
 from utils import get_common_headers
 from models import ChatImage
@@ -133,7 +133,7 @@ async def save_generated_image(account: Account, session_name: str, file_id: str
         f.write(image_bytes)
     
     # 返回本地URL
-    url = f"/images/{filename}"
+    url = f"{BASE_URL}/images/{filename}"
     return ChatImage(
         url=url,
         filename=filename,

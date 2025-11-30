@@ -133,6 +133,7 @@ async def stream_chat_generator(account: Account, session: str, text_content: st
 
     if is_stream:
         chunk = create_chunk(chat_id, created_time, model_name, {"role": "assistant"}, None)
+        print(f"DEBUG: Yielding role chunk: {chunk}")
         yield f"data: {chunk}\n\n"
 
     r = await http_client.post(
@@ -155,10 +156,11 @@ async def stream_chat_generator(account: Account, session: str, text_content: st
             text = reply.get("groundedContent", {}).get("content", {}).get("text", "")
             if text and not reply.get("thought"):
                 chunk = create_chunk(chat_id, created_time, model_name, {"content": text}, None)
+                print(f"DEBUG: Yielding text chunk: {chunk}")
                 if is_stream:
                     yield f"data: {chunk}\n\n"
     
     if is_stream:
         final_chunk = create_chunk(chat_id, created_time, model_name, {}, "stop")
+        print(f"DEBUG: Yielding final text chunk: {final_chunk}")
         yield f"data: {final_chunk}\n\n"
-        yield "data: [DONE]\n\n"

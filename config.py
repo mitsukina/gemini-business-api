@@ -15,6 +15,7 @@ logger = logging.getLogger("gemini")
 # ---------- 配置 ----------
 TIMEOUT_SECONDS = 600
 PROXY = os.getenv("PROXY") or "http://127.0.0.1:10808"
+BASE_URL = os.getenv("BASE_URL") or "http://localhost:8000"
 
 # ---------- 图片生成相关常量 ----------
 BASE_DIR = Path(__file__).resolve().parent

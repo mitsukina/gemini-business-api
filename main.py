@@ -14,14 +14,24 @@ from auth import Account, accounts
 from chat import parse_last_message, build_full_context_text, create_chunk, stream_chat_generator, get_conversation_key
 from session import create_google_session, list_session_files, save_generated_image, upload_context_file
 
-def estimate_tokens(text: str) -> int:
+def estimate_tokens(content) -> int:
     """简单估算token数，大约4个字符1个token"""
-    return len(text) // 4
+    if isinstance(content, str):
+        return len(content) // 4
+    elif isinstance(content, list):
+        total = 0
+        for item in content:
+            if isinstance(item, str):
+                total += len(item) // 4
+            elif isinstance(item, dict) and "text" in item:
+                total += len(item["text"]) // 4
+        return total
+    return 0
 
-def calculate_usage(prompt_text: str, completion_text: str) -> dict:
+def calculate_usage(prompt_text: str, completion_content) -> dict:
     """计算token使用情况"""
     prompt_tokens = estimate_tokens(prompt_text)
-    completion_tokens = estimate_tokens(completion_text)
+    completion_tokens = estimate_tokens(completion_content)
     return {
         "prompt_tokens": prompt_tokens,
         "completion_tokens": completion_tokens,
@@ -128,7 +138,30 @@ async def chat(req: ChatRequest):
             created_time, 
             req.stream
         ):
+            print(f"DEBUG: Yielding from generator: {chunk}")
             yield chunk
+
+        # 在文本生成后，检查是否有AI生成的图片
+        ai_files = await list_session_files(acc, session)
+        if ai_files:
+            for i, file_meta in enumerate(ai_files):
+                try:
+                    chat_image = await save_generated_image(
+                        acc, session, file_meta["fileId"], 
+                        file_meta.get("fileName"), file_meta.get("mimeType", "image/png"), 
+                        chat_id, i+1
+                    )
+                    # 产生图像描述chunk
+                    image_content = f"\n\n![generated image]({chat_image.url})"
+                    chunk = create_chunk(chat_id, created_time, req.model, {"content": image_content}, None)
+                    print(f"DEBUG: Yielding image content chunk: {chunk}")
+                    yield f"data: {chunk}\n\n"
+                except Exception as e:
+                    logger.error(f"保存图片失败: {e}")
+
+        # 流结束
+        print("DEBUG: Yielding [DONE]")
+        yield "data: [DONE]\n\n"
 
     if req.stream:
         return StreamingResponse(response_wrapper(google_session, account), media_type="text/event-stream")
@@ -143,26 +176,8 @@ async def chat(req: ChatRequest):
                 if "content" in delta: full_content += delta["content"]
             except: pass
 
-    # 检查是否有AI生成的图片
-    ai_files = await list_session_files(account, google_session)
-    generated_images = []
-    if ai_files:
-        for i, file_meta in enumerate(ai_files):
-            try:
-                chat_image = await save_generated_image(
-                    account, google_session, file_meta["fileId"], 
-                    file_meta.get("fileName"), file_meta.get("mimeType", "image/png"), 
-                    chat_id, i+1
-                )
-                generated_images.append(chat_image)
-            except Exception as e:
-                logger.error(f"保存图片失败: {e}")
-
-    # 如果有生成的图片，返回第一个图片的URL，否则返回文本
-    if generated_images:
-        content = generated_images[0].url
-    else:
-        content = full_content
+    # 返回完整内容
+    content = full_content
 
     CHAT_ID_TO_ACCOUNT[chat_id] = account.name
     
