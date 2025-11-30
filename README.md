@@ -13,6 +13,29 @@
 - ✅ 图片生成和下载
 - ✅ 代理支持
 
+## 项目结构
+
+```
+gemini-business-api/
+├── src/                    # 源代码目录
+│   ├── __init__.py
+│   ├── auth.py            # 认证相关
+│   ├── chat.py            # 聊天处理
+│   ├── config.py          # 配置管理
+│   ├── gemini.py          # 主入口
+│   ├── main.py            # FastAPI应用
+│   ├── models.py          # 数据模型
+│   ├── session.py         # 会话管理
+│   └── utils.py           # 工具函数
+├── config/                # 配置文件目录
+│   ├── app.json           # 应用配置（proxy, host, port, base_url）
+│   ├── config.json        # 生产配置
+│   └── config.test.json   # 测试配置
+├── generated_images/      # 生成的图片存储目录
+├── requirements.txt       # Python依赖
+└── README.md             # 项目文档
+```
+
 ## 快速开始
 
 ### 1. 环境准备
@@ -23,15 +46,29 @@
 python --version
 ```
 
-### 2. 安装依赖
+### 2. 配置应用
 
-```bash
-pip install -r requirements.txt
+创建 `config/app.json` 应用配置文件：
+
+```json
+{
+  "proxy": "http://127.0.0.1:10808",
+  "host": "0.0.0.0",
+  "port": 8000,
+  "base_url": "http://localhost:8000"
+}
 ```
+
+**配置说明：**
+
+- `proxy`: 代理服务器地址，用于网络请求
+- `host`: 服务器监听地址，`0.0.0.0` 表示监听所有接口
+- `port`: 服务器监听端口
+- `base_url`: 基础URL，用于生成图片链接等
 
 ### 3. 配置账户
 
-创建 `config.json` 配置文件：
+创建 `config/config.json` 配置文件：
 
 ```json
 {
@@ -63,12 +100,12 @@ pip install -r requirements.txt
 ### 4. 运行服务
 
 ```bash
-python gemini.py
+python src/gemini.py
 ```
 
-服务将在 `http://0.0.0.0:8000` 启动。
+服务将在 `config/app.json` 中配置的地址和端口启动。
 
-> **提示**: 如果启动失败，请检查 `config.json` 文件是否存在且配置正确。日志会输出详细的错误信息。
+> **提示**: 如果启动失败，请检查 `config/config.json` 和 `config/app.json` 文件是否存在且配置正确。日志会输出详细的错误信息。
 
 ## API 使用
 
@@ -129,10 +166,12 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 ### 环境变量
 
-- `PROXY`: 设置代理服务器，默认 `http://127.0.0.1:10808`
-- `HOST`: 设置服务器监听地址，默认 `0.0.0.0`
-- `PORT`: 设置服务器监听端口，默认 `8000`
-- `BASE_URL`: 设置基础URL，默认根据 `HOST` 和 `PORT` 自动生成（例如 `http://localhost:8000`）
+> **注意**: 应用配置现在通过 `config/app.json` 文件管理。环境变量仅在需要覆盖默认配置时使用。
+
+- `PROXY`: 设置代理服务器（覆盖 app.json 中的 proxy）
+- `HOST`: 设置服务器监听地址（覆盖 app.json 中的 host）
+- `PORT`: 设置服务器监听端口（覆盖 app.json 中的 port）
+- `BASE_URL`: 设置基础URL（覆盖 app.json 中的 base_url）
 
 ### 模型映射
 
@@ -167,7 +206,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
    - 检查 base64 编码是否正确
 
 4. **启动失败**
-   - 确保 `config.json` 文件存在且格式正确
+   - 确保 `config/config.json` 文件存在且格式正确
    - 检查 Python 版本和依赖安装
    - 查看控制台日志输出
 
@@ -176,7 +215,7 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 服务运行时会输出详细日志，可以通过日志信息排查问题：
 
 ```bash
-python gemini.py  # 日志级别为 INFO
+python src/gemini.py  # 日志级别为 INFO
 ```
 
 ## 许可证

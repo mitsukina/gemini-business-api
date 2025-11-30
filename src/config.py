@@ -1,6 +1,7 @@
 import os
 import logging
 import httpx
+import json
 from typing import Dict, Any
 from pathlib import Path
 
@@ -12,14 +13,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger("gemini")
 
+# ---------- 读取应用配置 ----------
+APP_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "app.json"
+try:
+    with open(APP_CONFIG_PATH, 'r', encoding='utf-8') as f:
+        app_config = json.load(f)
+except FileNotFoundError:
+    logger.warning(f"⚠️ 应用配置文件未找到: {APP_CONFIG_PATH}，使用默认配置")
+    app_config = {}
+except Exception as e:
+    logger.error(f"❌ 加载应用配置失败: {e}，使用默认配置")
+    app_config = {}
+
 # ---------- 配置 ----------
 TIMEOUT_SECONDS = 600
-PROXY = os.getenv("PROXY") or "http://127.0.0.1:10808"
-BASE_URL = os.getenv("BASE_URL") or "http://localhost:8000"
+PROXY = app_config.get("proxy", "http://127.0.0.1:10808")
+HOST = app_config.get("host", "0.0.0.0")
+PORT = app_config.get("port", 8000)
+BASE_URL = app_config.get("base_url", "http://localhost:8000")
 
 # ---------- 图片生成相关常量 ----------
 BASE_DIR = Path(__file__).resolve().parent
-IMAGE_SAVE_DIR = BASE_DIR / "generated_images"
+IMAGE_SAVE_DIR = BASE_DIR.parent / "generated_images"
 IMAGE_SAVE_DIR.mkdir(exist_ok=True)
 
 # ---------- 模型映射配置 ----------

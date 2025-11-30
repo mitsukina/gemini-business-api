@@ -97,14 +97,14 @@ class Account:
         self.jwt_mgr = JWTManager(self.secure_c_ses, self.host_c_oses, self.csesidx)
 
 def load_accounts() -> List[Account]:
-    config_file = 'config.test.json' if os.path.exists('config.test.json') else 'config.json'
+    config_file = 'config/config.test.json' if os.path.exists('config/config.test.json') else 'config/config.json'
     try:
         with open(config_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         logger.info(f"✅ 加载配置文件: {config_file}")
         return [Account(acc) for acc in data.get('accounts', [])]
     except FileNotFoundError:
-        logger.error("❌ 配置文件未找到，请创建config.json或config.test.json")
+        logger.error("❌ 配置文件未找到，请在config文件夹中创建config.json或config.test.json")
         return []
     except Exception as e:
         logger.error(f"❌ 加载{config_file}失败: {e}")
