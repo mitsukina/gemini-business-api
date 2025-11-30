@@ -58,6 +58,8 @@ pip install -r requirements.txt
 7. 从 Cookie 中提取 `__Secure-C_SES` 和 `__Host-C_OSES`
 8. `config_id` 和 `project_id` 需要从页面源码或 API 响应中获取
 
+> **注意**: 如果您有多个账户，可以在 `accounts` 数组中添加更多配置项，实现负载均衡。
+
 ### 4. 运行服务
 
 ```bash
@@ -65,6 +67,8 @@ python gemini.py
 ```
 
 服务将在 `http://0.0.0.0:8000` 启动。
+
+> **提示**: 如果启动失败，请检查 `config.json` 文件是否存在且配置正确。日志会输出详细的错误信息。
 
 ## API 使用
 
@@ -126,6 +130,9 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 ### 环境变量
 
 - `PROXY`: 设置代理服务器，默认 `http://127.0.0.1:10808`
+- `HOST`: 设置服务器监听地址，默认 `0.0.0.0`
+- `PORT`: 设置服务器监听端口，默认 `8000`
+- `BASE_URL`: 设置基础URL，默认根据 `HOST` 和 `PORT` 自动生成（例如 `http://localhost:8000`）
 
 ### 模型映射
 
@@ -158,6 +165,11 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 3. **图片上传失败**
    - 确认图片格式和大小
    - 检查 base64 编码是否正确
+
+4. **启动失败**
+   - 确保 `config.json` 文件存在且格式正确
+   - 检查 Python 版本和依赖安装
+   - 查看控制台日志输出
 
 ### 日志调试
 
